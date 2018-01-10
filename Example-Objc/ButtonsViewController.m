@@ -9,7 +9,7 @@
 #import "ButtonsViewController.h"
 #import "FSCalendar.h"
 
-@interface ButtonsViewController()<FSCalendarDataSource,FSCalendarDelegate>
+@interface ButtonsViewController()<FSCalendarDataSource,FSCalendarDelegate,FSCalendarDelegateAppearance>
 
 @property (weak, nonatomic) FSCalendar *calendar;
 @property (weak, nonatomic) UIButton *previousButton;
@@ -43,11 +43,18 @@
     // 450 for iPad and 300 for iPhone
     CGFloat height = [[UIDevice currentDevice].model hasPrefix:@"iPad"] ? 450 : 300;
     FSCalendar *calendar = [[FSCalendar alloc] initWithFrame:CGRectMake(0, 64, view.frame.size.width, height)];
+    calendar.locale = [NSLocale localeWithLocaleIdentifier:@"zh-CN"];
+    calendar.appearance.weekdayFont = [UIFont systemFontOfSize:10];
+    calendar.appearance.weekdayTextColor = [UIColor colorWithRed:177/255.0 green:178/255.0 blue:182/255.0 alpha:1/1.0];
+    calendar.appearance.todayColor = [UIColor colorWithRed:102/255.0 green:123/255.0 blue:250/255.0 alpha:1/1.0];
+    calendar.appearance.selectionColor = [UIColor colorWithRed:240/255.0 green:82/255.0 blue:53/255.0 alpha:1/1.0];
+    calendar.appearance.eventDefaultColor = [UIColor colorWithRed:240/255.0 green:82/255.0 blue:53/255.0 alpha:1/1.0];
+    calendar.appearance.eventSelectionColor = [UIColor colorWithRed:240/255.0 green:82/255.0 blue:53/255.0 alpha:1/1.0];
+    calendar.appearance.caseOptions = FSCalendarCaseOptionsHeaderUsesUpperCase|FSCalendarCaseOptionsWeekdayUsesSingleUpperCase;
     calendar.dataSource = self;
     calendar.delegate = self;
     calendar.backgroundColor = [UIColor whiteColor];
-    calendar.appearance.headerMinimumDissolvedAlpha = 0;
-    calendar.appearance.caseOptions = FSCalendarCaseOptionsHeaderUsesUpperCase;
+    
     [self.view addSubview:calendar];
     self.calendar = calendar;
     
@@ -57,7 +64,6 @@
     previousButton.titleLabel.font = [UIFont systemFontOfSize:15];
     [previousButton setImage:[UIImage imageNamed:@"icon_prev"] forState:UIControlStateNormal];
     [previousButton addTarget:self action:@selector(previousClicked:) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:previousButton];
     self.previousButton = previousButton;
     
     UIButton *nextButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -66,9 +72,10 @@
     nextButton.titleLabel.font = [UIFont systemFontOfSize:15];
     [nextButton setImage:[UIImage imageNamed:@"icon_next"] forState:UIControlStateNormal];
     [nextButton addTarget:self action:@selector(nextClicked:) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:nextButton];
     self.nextButton = nextButton;
     
+//    [self.view addSubview:nextButton];
+//    [self.view addSubview:previousButton];
 }
 
 - (void)previousClicked:(id)sender
@@ -85,5 +92,56 @@
     [self.calendar setCurrentPage:nextMonth animated:YES];
 }
 
+#pragma mark - FSCalendarDataSource
+
+- (NSInteger)calendar:(FSCalendar *)calendar numberOfEventsForDate:(NSDate *)date
+{
+    if ([self isFirstDayWithDate:date]) {
+        return 1;
+    }
+    return 0;
+}
+
+#pragma mark - FSCalendarDataSource
+
+- (NSString *)calendar:(FSCalendar *)calendar titleForDate:(NSDate *)date
+{
+    if ([self.gregorian isDateInToday:date]) {
+        return @"今";
+    }
+    /*
+    if ([self isFirstDayWithDate:date]) {
+        return [self monthStrWithDate:date];
+    }*/
+    return nil;
+}
+
+#pragma mark - Helper
+
+/**
+ *  返回当前月
+ */
+- (NSString *)monthStrWithDate:(NSDate *)date {
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"MM";
+    NSString *dateStr = [formatter stringFromDate:date];
+    if ([dateStr integerValue] < 10) {
+        dateStr = [dateStr substringFromIndex:1];
+    }
+    return [NSString stringWithFormat:@"%@月",dateStr];
+}
+
+/**
+ *  判断是否为本月1号
+ */
+- (BOOL)isFirstDayWithDate:(NSDate *)date {
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"dd";
+    NSString *dateStr = [formatter stringFromDate:date];
+    if ([dateStr isEqualToString:@"01"]) {
+        return YES;
+    }
+    return NO;
+}
 
 @end
